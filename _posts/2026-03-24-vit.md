@@ -157,7 +157,7 @@ image
 → [Optional Masking](#optional-masking)
 → [Add `[CLS]`Token](#add-clstoken)
 → [Add Positional Embeddings](#add-positional-embeddings)
-→ [Optional Dropout](optional-dropout)
+→ [Optional Dropout](#optional-dropout)
 → return token sequence
 
 ---
@@ -283,7 +283,7 @@ else:
 
 
 ---
-##### Optional Dropout
+##### Optional Dropout 
 standard dropout for regularization.
 
 ```python
