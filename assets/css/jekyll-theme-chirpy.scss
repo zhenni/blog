@@ -1,0 +1,317 @@
+---
+---
+
+@use 'main
+{%- if jekyll.environment == 'production' -%}
+  .bundle
+{%- endif -%}
+';
+
+/* =========================
+   Light mode
+   ========================= */
+
+html[data-mode='light'] .content h2,
+html:not([data-mode]) .content h2 {
+  margin-top: 4rem;
+  margin-bottom: 1.25rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  padding-left: 0.8rem;
+  border-left: 4px solid #424874;
+  color: #424874;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  background: linear-gradient(to right, rgba(220, 214, 247, 0.35), transparent);
+  border-radius: 0 6px 6px 0;
+}
+
+html[data-mode='light'] .content h3,
+html:not([data-mode]) .content h3 {
+  margin-top: 2.4rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.2rem;
+  color: #424874;
+  border-bottom: 1px solid #A6B1E1;
+  font-weight: 650;
+}
+
+html[data-mode='light'] .content h4,
+html:not([data-mode]) .content h4 {
+  margin-top: 1.9rem;
+  margin-bottom: 0.7rem;
+  color: #7480AA;
+  font-weight: 600;
+}
+
+html[data-mode='light'] .content h5,
+html:not([data-mode]) .content h5 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #7480AA;
+  opacity: 0.85;
+  font-weight: 600;
+}
+
+html[data-mode='light'] .content p,
+html:not([data-mode]) .content p {
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+html[data-mode='light'] .content a:link,
+html[data-mode='light'] .content a:visited,
+html:not([data-mode]) .content a:link,
+html:not([data-mode]) .content a:visited {
+  color: #7480AA;
+}
+
+html[data-mode='light'] .content a:hover,
+html:not([data-mode]) .content a:hover {
+  color: #424874;
+}
+
+html[data-mode='light'] .content ul,
+html[data-mode='light'] .content ol,
+html:not([data-mode]) .content ul,
+html:not([data-mode]) .content ol {
+  margin-bottom: 1rem;
+  padding-left: 1.4rem;
+}
+
+html[data-mode='light'] .content blockquote,
+html:not([data-mode]) .content blockquote {
+  margin: 1.2rem 0;
+  padding: 0.8rem 1rem;
+  border-left: 4px solid #A6B1E1;
+  background: #F4EEFF;
+  color: #424874;
+  border-radius: 0 8px 8px 0;
+}
+
+html[data-mode='light'] .content hr,
+html:not([data-mode]) .content hr {
+  border: none;
+  height: 2px;
+  margin: 2.5rem 0;
+  background: #424874;
+  border-radius: 999px;
+}
+
+html[data-mode='light'] .content details,
+html:not([data-mode]) .content details {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  background: #F4EEFF;
+  border: 1px solid #DCD6F7;
+  border-radius: 10px;
+}
+
+html[data-mode='light'] .content summary,
+html:not([data-mode]) .content summary {
+  cursor: pointer;
+  color: #424874;
+  font-weight: 600;
+}
+
+html[data-mode='light'] .content table,
+html:not([data-mode]) .content table {
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+html[data-mode='light'] .content th,
+html:not([data-mode]) .content th {
+  background: #DCD6F7;
+  color: #424874;
+}
+
+html[data-mode='light'] .content th,
+html[data-mode='light'] .content td,
+html:not([data-mode]) .content th,
+html:not([data-mode]) .content td {
+  padding: 0.75rem 1rem;
+}
+
+html[data-mode='light'] .content tr:nth-child(even),
+html:not([data-mode]) .content tr:nth-child(even) {
+  background: rgba(244, 238, 255, 0.6);
+}
+
+html[data-mode='light'] .content code,
+html:not([data-mode]) .content code {
+  background: #F4EEFF;
+  color: #424874;
+  border-radius: 6px;
+  padding: 0.15rem 0.35rem;
+}
+
+html[data-mode='light'] .content .highlighter-rouge,
+html[data-mode='light'] .content .highlight,
+html:not([data-mode]) .content .highlighter-rouge,
+html:not([data-mode]) .content .highlight {
+  border-radius: 14px;
+  box-shadow: 0 5px 5px rgba(66, 72, 116, 0.08);
+}
+
+html[data-mode='light'] .content .highlight pre,
+html[data-mode='light'] .content .highlighter-rouge pre,
+html:not([data-mode]) .content .highlight pre,
+html:not([data-mode]) .content .highlighter-rouge pre {
+  color: #424874;
+}
+
+html[data-mode='light'] .content .highlight code,
+html[data-mode='light'] .content .highlighter-rouge code,
+html:not([data-mode]) .content .highlight code,
+html:not([data-mode]) .content .highlighter-rouge code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+
+/* =========================
+   Dark mode
+   ========================= */
+
+html[data-mode='dark'] .content h2 {
+  margin-top: 4rem;
+  margin-bottom: 1.25rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  padding-left: 0.8rem;
+  border-left: 4px solid #A6B1E1;
+  color: #F4EEFF;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  background: linear-gradient(to right, rgba(166, 177, 225, 0.14), transparent);
+  border-radius: 0 6px 6px 0;
+}
+
+html[data-mode='dark'] .content h3 {
+  margin-top: 2.4rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.2rem;
+  color: #DCD6F7;
+  border-bottom: 1px solid rgba(166, 177, 225, 0.35);
+  font-weight: 650;
+}
+
+html[data-mode='dark'] .content h4 {
+  margin-top: 1.9rem;
+  margin-bottom: 0.7rem;
+  color: #A6B1E1;
+  font-weight: 600;
+}
+
+html[data-mode='dark'] .content h5 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #DCD6F7;
+  opacity: 0.85;
+  font-weight: 600;
+}
+
+html[data-mode='dark'] .content p {
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+html[data-mode='dark'] .content a:link,
+html[data-mode='dark'] .content a:visited {
+  color: #A6B1E1;
+}
+
+html[data-mode='dark'] .content a:hover {
+  color: #F4EEFF;
+}
+
+html[data-mode='dark'] .content ul,
+html[data-mode='dark'] .content ol {
+  margin-bottom: 1rem;
+  padding-left: 1.4rem;
+}
+
+html[data-mode='dark'] .content blockquote {
+  margin: 1.2rem 0;
+  padding: 0.8rem 1rem;
+  border-left: 4px solid #A6B1E1;
+  background: rgba(244, 238, 255, 0.05);
+  color: #DCD6F7;
+  border-radius: 0 8px 8px 0;
+}
+
+html[data-mode='dark'] .content hr {
+  border: none;
+  height: 2px;
+  margin: 2.5rem 0;
+  background: #A6B1E1;
+  border-radius: 999px;
+  opacity: 0.8;
+}
+
+html[data-mode='dark'] .content details {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  background: rgba(244, 238, 255, 0.04);
+  border: 1px solid rgba(166, 177, 225, 0.25);
+  border-radius: 10px;
+}
+
+html[data-mode='dark'] .content summary {
+  cursor: pointer;
+  color: #F4EEFF;
+  font-weight: 600;
+}
+
+html[data-mode='dark'] .content table {
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+html[data-mode='dark'] .content th {
+  background: rgba(166, 177, 225, 0.18);
+  color: #F4EEFF;
+}
+
+html[data-mode='dark'] .content th,
+html[data-mode='dark'] .content td {
+  padding: 0.75rem 1rem;
+}
+
+html[data-mode='dark'] .content tr:nth-child(even) {
+  background: rgba(244, 238, 255, 0.03);
+}
+
+html[data-mode='dark'] .content code {
+  background: rgba(244, 238, 255, 0.08);
+  color: #F4EEFF;
+  border-radius: 6px;
+  padding: 0.15rem 0.35rem;
+}
+
+html[data-mode='dark'] .content .highlighter-rouge,
+html[data-mode='dark'] .content .highlight {
+  border-radius: 14px;
+  box-shadow: 0 5px 5px rgba(0, 0, 0, 0.12);
+}
+
+html[data-mode='dark'] .content .highlight pre,
+html[data-mode='dark'] .content .highlighter-rouge pre {  
+  color: #F4EEFF;
+}
+
+html[data-mode='dark'] .content .highlight code,
+html[data-mode='dark'] .content .highlighter-rouge code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
