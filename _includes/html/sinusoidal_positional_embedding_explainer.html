@@ -1,0 +1,305 @@
+
+<style>
+  .val { font-size: 13px; font-weight: 500; min-width: 28px; text-align: right; }
+  .tab-row { display: flex; gap: 6px; margin-bottom: 1.25rem; }
+  .tab { padding: 5px 14px; font-size: 13px; border-radius: 20px; border: 0.5px solid #424874; background: transparent; color: var(--color-text-secondary); cursor: pointer; transition: background .15s; }
+  .tab.active { background: #dcd6f7; color: var(--color-text-primary); font-weight: 500; border-color: #424874; }
+  .insight { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; padding: 10px 14px; background: #dcd6f7; border-radius: var(--border-radius-md); border-left: 2px solid #424874; margin-top: 1rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; }
+</style>
+
+<div style="padding: 0 2px;">
+
+<div class="tab-row">
+  <button class="tab active" onclick="showTab('pendulum')">Pendulum snapshot</button>
+  <button class="tab" onclick="showTab('heatmap')">Encoding heatmap</button>
+  <button class="tab" onclick="showTab('similarity')">Dot product similarity</button>
+</div>
+
+<div id="tab-pendulum">
+  <p class="section-title">Pendulums swinging at different frequencies</p>
+  <div class="row">
+    <span class="label">Token position</span>
+    <input type="range" min="0" max="49" value="5" id="posSlider" style="flex:1;" step="1" oninput="updatePos(this.value)">
+    <span class="val" id="posVal">5</span>
+  </div>
+  <div class="row">
+    <span class="label">Show dims</span>
+    <input type="range" min="4" max="16" value="12" id="dimSlider" style="flex:1;" step="1" oninput="updateDims(this.value)">
+    <span class="val" id="dimVal">12</span>
+  </div>
+  <canvas id="pendCanvas" width="640" height="240" style="width:100%;"></canvas>
+  <div class="grid2" style="margin-top:12px;">
+    <div class="metric"><div class="metric-label">Slowest frequency (dim 0)</div><div class="metric-val" id="slowFreq">—</div></div>
+    <div class="metric"><div class="metric-label">Fastest frequency (dim shown)</div><div class="metric-val" id="fastFreq">—</div></div>
+  </div>
+  <div class="insight" id="pendInsight">The snapshot captures each pendulum's angle at this position. Nearby positions look similar; distant ones diverge.</div>
+</div>
+
+<div id="tab-heatmap" style="display:none;">
+  <p class="section-title">Sinusoidal values across positions × dimensions</p>
+  <div class="row">
+    <span class="label">Seq length</span>
+    <input type="range" min="8" max="50" value="30" id="seqSlider" style="flex:1;" step="1" oninput="drawHeatmap()">
+    <span class="val" id="seqVal">30</span>
+  </div>
+  <div class="row">
+    <span class="label">Dimensions</span>
+    <input type="range" min="8" max="64" value="32" id="hdSlider" style="flex:1;" step="2" oninput="drawHeatmap()">
+    <span class="val" id="hdVal">32</span>
+  </div>
+  <canvas id="heatCanvas" width="640" height="280" style="width:100%;"></canvas>
+  <div class="insight">Each row is one token's positional encoding — a unique fingerprint. Left dims (slow) change gradually; right dims (fast) oscillate rapidly.</div>
+</div>
+
+<div id="tab-similarity" style="display:none;">
+  <p class="section-title">Dot product similarity vs distance</p>
+  <div class="row">
+    <span class="label">Anchor token</span>
+    <input type="range" min="0" max="49" value="10" id="anchorSlider" style="flex:1;" step="1" oninput="drawSimilarity()">
+    <span class="val" id="anchorVal">10</span>
+  </div>
+  <div class="row">
+    <span class="label">Dimensions</span>
+    <input type="range" min="16" max="128" value="64" id="simDimSlider" style="flex:1;" step="8" oninput="drawSimilarity()">
+    <span class="val" id="simDimVal">64</span>
+  </div>
+  <canvas id="simCanvas" width="640" height="280" style="width:100%;"></canvas>
+  <div class="insight">The anchor token (highlighted) has maximum similarity with itself, and similarity smoothly decays as tokens move further away — exactly as the theory predicts.</div>
+</div>
+
+</div>
+
+<script>
+let pos = 5, dims = 12;
+const SEQ = 50;
+
+function pe(position, i, d_model) {
+  if (i % 2 === 0) return Math.sin(position / Math.pow(10000, i / d_model));
+  else return Math.cos(position / Math.pow(10000, (i-1) / d_model));
+}
+
+function showTab(name) {
+  ['pendulum','heatmap','similarity'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===name ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((b,i) => {
+    b.classList.toggle('active', ['pendulum','heatmap','similarity'][i] === name);
+  });
+  if(name==='heatmap') drawHeatmap();
+  if(name==='similarity') drawSimilarity();
+  if(name==='pendulum') drawPendulum();
+}
+
+function updatePos(v) {
+  pos = parseInt(v);
+  document.getElementById('posVal').textContent = v;
+  drawPendulum();
+}
+function updateDims(v) {
+  dims = parseInt(v);
+  document.getElementById('dimVal').textContent = v;
+  drawPendulum();
+}
+
+function isDark() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function drawPendulum() {
+  const canvas = document.getElementById('pendCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const dark = isDark();
+  const bg = dark ? '#1a1a1a' : '#f8f8f6';
+  ctx.fillStyle = bg;
+  ctx.beginPath(); ctx.roundRect(0,0,W,H,8); ctx.fill();
+
+  const n = dims;
+  const colW = W / n;
+  const pivotY = 36;
+  const armLen = H - pivotY - 28;
+  const bobR = 9;
+
+  const axisCol = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  ctx.strokeStyle = axisCol; ctx.lineWidth = 1;
+  for(let i=0; i<n; i++) {
+    const cx = colW * i + colW/2;
+    ctx.beginPath(); ctx.moveTo(cx, pivotY); ctx.lineTo(cx, H - 14); ctx.stroke();
+  }
+
+  for(let i=0; i<n; i++) {
+    const cx = colW * i + colW/2;
+    const val = pe(pos, i, 256);
+    const angle = val * Math.PI * 0.38;
+    const bx = cx + Math.sin(angle) * armLen;
+    const by = pivotY + Math.cos(angle) * armLen;
+
+    const t = (i / (n-1));
+    const r = Math.round(55 + t * 200);
+    const g = Math.round(120 - t * 60);
+    const b2 = Math.round(220 - t * 120);
+    const rodCol = dark ? `rgba(${r},${g},${b2},0.7)` : `rgba(${r},${g},${b2},0.9)`;
+    const bobCol = dark ? `rgba(${r},${g},${b2},0.95)` : `rgba(${r},${g},${b2},1)`;
+
+    ctx.strokeStyle = rodCol; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cx, pivotY); ctx.lineTo(bx, by); ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(cx, pivotY, 4, 0, Math.PI*2);
+    ctx.fillStyle = dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)'; ctx.fill();
+
+    ctx.beginPath(); ctx.arc(bx, by, bobR, 0, Math.PI*2);
+    ctx.fillStyle = bobCol; ctx.fill();
+
+    const textCol = dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)';
+    ctx.fillStyle = textCol; ctx.font = '10px var(--font-sans)';
+    ctx.textAlign = 'center';
+    ctx.fillText(val.toFixed(1), bx, by + bobR + 11);
+  }
+
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)';
+  ctx.font = '11px var(--font-sans)'; ctx.textAlign = 'left';
+  ctx.fillText('slow', 6, H-4);
+  ctx.textAlign = 'right';
+  ctx.fillText('fast', W-6, H-4);
+
+  const slowF = (1 / Math.pow(10000, 0)).toFixed(4);
+  const fastF = (1 / Math.pow(10000, (dims-1)/256)).toFixed(6);
+  document.getElementById('slowFreq').textContent = parseFloat(slowF).toFixed(4);
+  document.getElementById('fastFreq').textContent = parseFloat(fastF).toFixed(6);
+
+  const insight = pos < 3
+    ? 'Very early position — most pendulums are near equilibrium. Hard to distinguish from neighbors.'
+    : pos < 15
+    ? 'Mid-early position — slow dims provide coarse location, fast dims add fine detail.'
+    : 'Later position — the slow pendulums have moved noticeably; fast ones are cycling rapidly.';
+  document.getElementById('pendInsight').textContent = insight;
+}
+
+function drawHeatmap() {
+  const seqLen = parseInt(document.getElementById('seqSlider').value);
+  const hd = parseInt(document.getElementById('hdSlider').value);
+  document.getElementById('seqVal').textContent = seqLen;
+  document.getElementById('hdVal').textContent = hd;
+
+  const canvas = document.getElementById('heatCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const dark = isDark();
+
+  const padL = 36, padT = 18, padB = 28, padR = 12;
+  const gridW = W - padL - padR;
+  const gridH = H - padT - padB;
+  const cw = gridW / hd;
+  const ch = gridH / seqLen;
+
+  for(let p=0; p<seqLen; p++) {
+    for(let i=0; i<hd; i++) {
+      const v = pe(p, i, hd);
+      const norm = (v + 1) / 2;
+      let r, g, b;
+      if(norm < 0.5) {
+        const t = norm * 2;
+        r = Math.round(30 + t*(80-30));
+        g = Math.round(80 + t*(150-80));
+        b = Math.round(180 + t*(220-180));
+      } else {
+        const t = (norm - 0.5) * 2;
+        r = Math.round(80 + t*(250-80));
+        g = Math.round(150 + t*(220-150));
+        b = Math.round(220 + t*(100-220));
+      }
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(padL + i*cw, padT + p*ch, Math.ceil(cw)+1, Math.ceil(ch)+1);
+    }
+  }
+
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
+  ctx.font = '11px var(--font-sans)';
+  ctx.textAlign = 'center';
+  ctx.fillText('Dimension →', padL + gridW/2, H - 4);
+  ctx.save(); ctx.translate(11, padT + gridH/2); ctx.rotate(-Math.PI/2);
+  ctx.textAlign = 'center'; ctx.fillText('Position →', 0, 0); ctx.restore();
+
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(padL, padT, gridW, gridH);
+}
+
+function drawSimilarity() {
+  const anchor = parseInt(document.getElementById('anchorSlider').value);
+  const d = parseInt(document.getElementById('simDimSlider').value);
+  document.getElementById('anchorVal').textContent = anchor;
+  document.getElementById('simDimVal').textContent = d;
+
+  const sims = [];
+  for(let p=0; p<SEQ; p++) {
+    let dot = 0;
+    for(let i=0; i<d; i++) dot += pe(anchor,i,d) * pe(p,i,d);
+    sims.push(dot);
+  }
+  const maxVal = Math.max(...sims);
+
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const dark = isDark();
+  const bg = dark ? '#1a1a1a' : '#f8f8f6';
+  ctx.fillStyle = bg;
+  ctx.beginPath(); ctx.roundRect(0,0,W,H,8); ctx.fill();
+
+  const padL=44, padT=18, padR=18, padB=36;
+  const gW = W-padL-padR, gH = H-padT-padB;
+  const minV = Math.min(...sims), maxV = maxVal;
+  const range = maxV - minV || 1;
+
+  const gridCol = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+  ctx.strokeStyle = gridCol; ctx.lineWidth = 1;
+  for(let g=0; g<=4; g++) {
+    const y = padT + gH - (g/4)*gH;
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+gW,y); ctx.stroke();
+    const v = (minV + (g/4)*range).toFixed(1);
+    ctx.fillStyle = dark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.4)';
+    ctx.font = '11px var(--font-sans)'; ctx.textAlign = 'right';
+    ctx.fillText(v, padL-5, y+4);
+  }
+
+  const barW = gW / SEQ;
+  for(let p=0; p<SEQ; p++) {
+    const x = padL + p * barW;
+    const norm = (sims[p]-minV)/range;
+    const bH = norm * gH;
+    const y = padT + gH - bH;
+    const isAnchor = p === anchor;
+    const dist = Math.abs(p - anchor);
+    const alpha = dark ? 0.6 : 0.75;
+    ctx.fillStyle = isAnchor ? '#3266ad' : (sims[p] > 0 ? `rgba(50,102,173,${0.2 + 0.5*(norm)})` : `rgba(210,90,48,${0.3})`);
+    ctx.fillRect(x+1, y, barW-2, bH);
+    if(p%5===0) {
+      ctx.fillStyle = dark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
+      ctx.font = '11px var(--font-sans)'; ctx.textAlign = 'center';
+      ctx.fillText(p, x+barW/2, H-6);
+    }
+  }
+
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(padL, padT, gW, gH);
+
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
+  ctx.font = '11px var(--font-sans)'; ctx.textAlign = 'center';
+  ctx.fillText('Token position', padL + gW/2, H-1);
+  ctx.save(); ctx.translate(11, padT+gH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Dot product', 0, 0); ctx.restore();
+
+  ctx.fillStyle = '#3266ad';
+  ctx.font = '11px var(--font-sans)'; ctx.textAlign = 'left';
+  ctx.fillText('▲ anchor = pos '+anchor, padL+anchor*barW+4, padT+12);
+}
+
+drawPendulum();
+</script>
