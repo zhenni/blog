@@ -645,6 +645,7 @@ $$
 
 ![](positional-embeddings-rope-idea.png)
 ![](positional-embeddings-rope-math.png)
+
 - The rotation matrix $\mathbf{R}_𝑚$ geometrically rotates the 2D input vector by an angle $𝑚⁢𝜃_𝑖$
 - The transpose $\mathbf{R}^T_𝑚$ = $\mathbf{R}^{−1}_𝑚$  
 - represents reverse rotation. 
